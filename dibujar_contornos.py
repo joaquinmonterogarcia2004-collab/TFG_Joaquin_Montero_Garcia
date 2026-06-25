@@ -1,0 +1,76 @@
+from glob import glob
+import matplotlib.pyplot as plt
+import cv2
+import numpy as np
+import os
+
+dict_classes = {
+    "0": "background",
+    "20": "Untitled",
+    "53": "anastomotic_line",
+    "86": "ileal_body",
+    "119": "colonic_blind_loop",
+    "151": "ileal_inlet",
+    "184": "neo-TI",
+    "217": "ileal_blind_loop",
+    "250": "Colon_proximal_to_anastomosis"
+}
+
+colores = {
+    0:   (0, 0, 0),
+    20:  (0, 0, 255),
+    53:  (0, 255, 0),
+    86:  (255, 0, 0),
+    119: (0, 255, 255),
+    151: (255, 0, 255),
+    184: (255, 255, 0),
+    217: (128, 128, 128),
+    250: (64, 64, 64)
+}
+
+def dibujar_contornos(frame, mask, grosor=3):
+    resultado = frame.copy()
+    for valor, color in colores.items():
+        if valor == 0:
+            continue  # saltar background
+        mascara_binaria = np.uint8(mask == valor) * 255
+        contornos, _ = cv2.findContours(mascara_binaria, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cv2.drawContours(resultado, contornos, -1, color, grosor)
+    return resultado
+
+# Rutas de imagen y máscara para dibujar contornos
+frame_path = ""
+mask_path = ""
+
+
+grosor = 10
+
+frame = cv2.imread(frame_path)
+mask  = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
+
+if frame is None:
+    print("No se pudo cargar el frame:", frame_path)
+elif mask is None:
+    print("No se pudo cargar la máscara:", mask_path)
+else:
+    resultado = dibujar_contornos(frame, mask, grosor=grosor)
+
+   
+    plt.figure(figsize=(12, 6))
+    plt.subplot(1, 2, 1)
+    plt.imshow(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+    plt.title("Frame original")
+    plt.axis("off")
+
+    plt.subplot(1, 2, 2)
+    plt.imshow(cv2.cvtColor(resultado, cv2.COLOR_BGR2RGB))
+    plt.title("Contornos superpuestos")
+    plt.axis("off")
+
+    plt.tight_layout()
+    plt.show()
+
+    # Guardar resultado
+    output_path = "Z:/Shared_PFC-TFG-TFM/Activos/2025_2026/JoaquinMontero/data/resultado_contornos2.png"
+    cv2.imwrite(output_path, resultado)
+    print(f"Imagen guardada en: {output_path}")
